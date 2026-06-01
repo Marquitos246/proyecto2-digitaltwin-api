@@ -2,9 +2,9 @@
   "name": "proyecto2-digitaltwin-api",
   "version": "1.0.0",
   "description": "API propia para el proyecto de Digital Twin en Unity",
-  "main": "servidor.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node servidor.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
