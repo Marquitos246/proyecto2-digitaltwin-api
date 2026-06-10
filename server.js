@@ -29,7 +29,7 @@ let estadoFabrica = {
     // > 50  = NORMAL
     // 25-50 = BAJO CONSUMO
     // < 25  = CRITICO
-    nivelEnergia: 75,
+    nivelEnergia: 15,
 
     puerta: {
         // Valores posibles: "CERRADA", "ABIERTA", "BLOQUEADA", "ACCESO DENEGADO"
@@ -50,7 +50,7 @@ let estadoFabrica = {
         consumo: 35
     },
 
-    mensaje: "Estado actualizado desde GitHub y Render"
+   mensaje: "Prueba de energia critica desde GitHub"
 };
 
 function actualizarGenerador() {
