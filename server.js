@@ -9,7 +9,7 @@ app.use(express.json());
 
 let estadoFabrica = {
     modoFabrica: "MANUAL",
-    alarma: false,
+    alarma: true,
     nivelEnergia: 75,
 
     puerta: {
