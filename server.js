@@ -7,28 +7,50 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+/*
+    ============================================================
+    EDITAR ESTADO DE LA FABRICA DESDE GITHUB
+    ============================================================
+
+    Para cambiar el comportamiento de Unity:
+    1. Modificar los valores de estadoFabrica.
+    2. Hacer Commit changes en GitHub.
+    3. Esperar a que Render despliegue la nueva version.
+    4. Unity leera /estado automaticamente y actualizara la escena.
+*/
+
 let estadoFabrica = {
-    modoFabrica: "MANUAL",
-    alarma: true,
+    modoFabrica: "AUTOMATICO",
+
+    // Si alarma es true, Unity activara alarma general y bloqueara la puerta.
+    alarma: false,
+
+    // Cambiar este valor para probar el sistema energetico:
+    // > 50  = NORMAL
+    // 25-50 = BAJO CONSUMO
+    // < 25  = CRITICO
     nivelEnergia: 75,
 
     puerta: {
+        // Valores posibles: "CERRADA", "ABIERTA", "BLOQUEADA", "ACCESO DENEGADO"
         estado: "CERRADA",
-        ultimoAcceso: "Ninguno"
+        ultimoAcceso: "API"
     },
 
     prensa: {
-        estado: "APAGADA",
-        ciclos: 0,
+        // Valores posibles: "APAGADA", "ENCENDIDA", "TRABAJANDO", "ERROR", "MANTENIMIENTO"
+        estado: "TRABAJANDO",
+        ciclos: 12,
         error: false
     },
 
     generador: {
+        // Este estado se recalcula automaticamente segun nivelEnergia.
         estado: "NORMAL",
         consumo: 35
     },
 
-    mensaje: "API iniciada correctamente"
+    mensaje: "Estado actualizado desde GitHub y Render"
 };
 
 function actualizarGenerador() {
@@ -42,12 +64,22 @@ function actualizarGenerador() {
 }
 
 function actualizarAlarma() {
-    estadoFabrica.alarma =
+    if (
+        estadoFabrica.alarma ||
         estadoFabrica.prensa.error ||
-        estadoFabrica.nivelEnergia < 25;
+        estadoFabrica.nivelEnergia < 25
+    ) {
+        estadoFabrica.alarma = true;
+    } else {
+        estadoFabrica.alarma = false;
+    }
 
     if (estadoFabrica.alarma) {
         estadoFabrica.puerta.estado = "BLOQUEADA";
+
+        if (estadoFabrica.prensa.estado === "TRABAJANDO" && estadoFabrica.nivelEnergia < 25) {
+            estadoFabrica.prensa.estado = "MANTENIMIENTO";
+        }
     }
 }
 
@@ -58,128 +90,6 @@ app.get("/", (req, res) => {
 app.get("/estado", (req, res) => {
     actualizarGenerador();
     actualizarAlarma();
-    res.json(estadoFabrica);
-});
-
-app.get("/normal", (req, res) => {
-    estadoFabrica.modoFabrica = "AUTOMATICO";
-    estadoFabrica.nivelEnergia = 75;
-    estadoFabrica.generador.consumo = 35;
-
-    estadoFabrica.prensa.estado = "TRABAJANDO";
-    estadoFabrica.prensa.error = false;
-    estadoFabrica.prensa.ciclos += 1;
-
-    estadoFabrica.puerta.estado = "CERRADA";
-    estadoFabrica.puerta.ultimoAcceso = "API";
-
-    estadoFabrica.mensaje = "Funcionamiento normal desde API";
-
-    actualizarGenerador();
-    actualizarAlarma();
-
-    res.json(estadoFabrica);
-});
-
-app.get("/bajo-consumo", (req, res) => {
-    estadoFabrica.modoFabrica = "AUTOMATICO";
-    estadoFabrica.nivelEnergia = 40;
-    estadoFabrica.generador.consumo = 55;
-
-    estadoFabrica.prensa.estado = "ENCENDIDA";
-    estadoFabrica.prensa.error = false;
-
-    estadoFabrica.puerta.estado = "CERRADA";
-    estadoFabrica.puerta.ultimoAcceso = "API";
-
-    estadoFabrica.mensaje = "Modo bajo consumo activado desde API";
-
-    actualizarGenerador();
-    actualizarAlarma();
-
-    res.json(estadoFabrica);
-});
-
-app.get("/critico", (req, res) => {
-    estadoFabrica.modoFabrica = "AUTOMATICO";
-    estadoFabrica.nivelEnergia = 15;
-    estadoFabrica.generador.consumo = 80;
-
-    estadoFabrica.prensa.estado = "MANTENIMIENTO";
-    estadoFabrica.prensa.error = false;
-
-    estadoFabrica.puerta.estado = "BLOQUEADA";
-    estadoFabrica.puerta.ultimoAcceso = "Bloqueado";
-
-    estadoFabrica.mensaje = "Energia critica. Sistema en alarma";
-
-    actualizarGenerador();
-    actualizarAlarma();
-
-    res.json(estadoFabrica);
-});
-
-app.get("/error-prensa", (req, res) => {
-    estadoFabrica.modoFabrica = "AUTOMATICO";
-    estadoFabrica.nivelEnergia = 60;
-    estadoFabrica.generador.consumo = 45;
-
-    estadoFabrica.prensa.estado = "ERROR";
-    estadoFabrica.prensa.error = true;
-
-    estadoFabrica.puerta.estado = "BLOQUEADA";
-    estadoFabrica.puerta.ultimoAcceso = "Bloqueado";
-
-    estadoFabrica.mensaje = "Error detectado en la prensa";
-
-    actualizarGenerador();
-    actualizarAlarma();
-
-    res.json(estadoFabrica);
-});
-
-app.get("/rfid", (req, res) => {
-    actualizarGenerador();
-    actualizarAlarma();
-
-    if (estadoFabrica.alarma) {
-        estadoFabrica.puerta.estado = "ACCESO DENEGADO";
-        estadoFabrica.puerta.ultimoAcceso = "RFID denegado";
-        estadoFabrica.mensaje = "RFID detectado, acceso denegado por alarma";
-    } else {
-        estadoFabrica.puerta.estado = "ABIERTA";
-        estadoFabrica.puerta.ultimoAcceso = "RFID";
-        estadoFabrica.mensaje = "Acceso RFID permitido desde API";
-    }
-
-    res.json(estadoFabrica);
-});
-
-app.get("/reset", (req, res) => {
-    estadoFabrica = {
-        modoFabrica: "MANUAL",
-        alarma: false,
-        nivelEnergia: 75,
-
-        puerta: {
-            estado: "CERRADA",
-            ultimoAcceso: "Ninguno"
-        },
-
-        prensa: {
-            estado: "APAGADA",
-            ciclos: 0,
-            error: false
-        },
-
-        generador: {
-            estado: "NORMAL",
-            consumo: 35
-        },
-
-        mensaje: "Sistema reiniciado desde API"
-    };
-
     res.json(estadoFabrica);
 });
 
