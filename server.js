@@ -29,7 +29,7 @@ let estadoFabrica = {
     // > 50  = NORMAL
     // 25-50 = BAJO CONSUMO
     // < 25  = CRITICO
-    nivelEnergia: 50,
+    nivelEnergia: 75,
 
     puerta: {
         // Valores posibles: "CERRADA", "ABIERTA", "BLOQUEADA", "ACCESO DENEGADO"
