@@ -40,7 +40,7 @@ let estadoFabrica = {
     prensa: {
         // Valores posibles: "APAGADA", "ENCENDIDA", "TRABAJANDO", "ERROR", "MANTENIMIENTO"
         estado: "TRABAJANDO",
-        ciclos: 12,
+        ciclos: 0,
         error: false
     },
 
